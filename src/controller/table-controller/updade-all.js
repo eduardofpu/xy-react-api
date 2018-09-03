@@ -63,15 +63,17 @@ class FormularioTable extends Component {
 
                 <form className="pure-form pure-form-aligned" onSubmit={this.enviaForm} method="post">
 
-                       <InputCustomizado id="id" type="text"  name="id"  
-                        value={this.state.id} required placeholder="Id" 
-                        onChange={this.salvaAlteracao.bind(this,'id')}                     
-                        label="ID" /> 
+                       
 
                         <InputCustomizado id="nameTable" type="text"  name="nameTable"  
                         value={this.state.nameTable} required placeholder="Name" 
                         onChange={this.salvaAlteracao.bind(this,'nameTable')}                     
                         label="Table Name" />   
+
+                        <InputCustomizado id="id" type="text"  name="id"  
+                        value={this.state.id} required placeholder="Id" 
+                        onChange={this.salvaAlteracao.bind(this,'id')}                     
+                        label="ID" /> 
 
                          <InputCustomizado  id="parameters" type="parameters"  name="parameters"                      
                          value={this.state.parameters}  placeholder="ex: name,idade,..." 
