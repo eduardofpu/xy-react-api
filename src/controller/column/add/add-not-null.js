@@ -1,30 +1,32 @@
 import React, { Component } from 'react';
 import $ from 'jquery';
-import InputCustomizado from './componentes/InputCustomizado';
+import InputCustomizado from '../../../componentes/InputCustomizado';
 import PubSub from 'pubsub-js';
-import TratadorErros from './TratadorErros';
+import TratadorErros from '../../../TratadorErros';
+import Pagination from "react-js-pagination";
+import "bootstrap/less/bootstrap.less";
 
 
 class FormularioColumn extends Component {
     constructor() {
         super();
-        this.state = { nameTable: '', nameColumn: '', dataType: ''};
+        this.state = { nameTable: '', nameColumn: ''};
         this.enviaForm = this.enviaForm.bind(this);
         
     }
     enviaForm(evento) {
         evento.preventDefault();
         $.ajax({
-            url: "http://localhost:8080/add/column",   
+            url: "http://localhost:8080/add/not/null",   
             contentType: 'application/json',
             dataType: 'json',
-            type: 'post',           
+            type: 'put',           
 
-            data: JSON.stringify({ nameTable: this.state.nameTable, nameColumn: this.state.nameColumn, dataType: this.state.dataType }),
+            data: JSON.stringify({ nameTable: this.state.nameTable, nameColumn: this.state.nameColumn }),
             success: function (novaListagem) {
                 //disparar um aviso geral de novalistagem disponivel
                 PubSub.publish('atualiza-listagem-tables', novaListagem);
-                this.setState({ nameTable: '', nameColumn: '', dataType: '' })//limpa o formulario              
+                this.setState({ nameTable: '', nameColumn: '' })//limpa o formulario              
             }.bind(this),
             error: function (resposta) {
 
@@ -49,17 +51,14 @@ class FormularioColumn extends Component {
     render() {
         return (
             <div className="pure-form pure-form-aligned">
-                <form className="pure-form pure-form-aligned" onSubmit={this.enviaForm} method="post">
+                <form className="pure-form pure-form-aligned" onSubmit={this.enviaForm} method="put">
 
                     <InputCustomizado id="nameTable" type="text"  name="nameTable"  value={this.state.nameTable} required placeholder="Name" 
                     onChange={this.salvaAlteracao.bind(this,'nameTable')} label="Table Name" />
 
                     <InputCustomizado id="nameColumn" type="text"  name="nameColumn"  value={this.state.nameColumn} required placeholder="Column" 
                     onChange={this.salvaAlteracao.bind(this,'nameColumn')} label="Column Name" />
-
-                    <InputCustomizado id="dataType" type="text"  name="dataType"  value={this.state.dataType} required placeholder="Type" 
-                    onChange={this.salvaAlteracao.bind(this,'dataType')} label="Data Type Name" />
-                    
+   
                     <div className="pure-control-group">
                         <label></label>
                         <button type="submit" className="pure-button pure-button-primary">Record</button>
@@ -74,8 +73,21 @@ class FormularioColumn extends Component {
 
 
 
-class AddColumnTable extends Component {      
-      
+class Table extends Component {      
+    constructor(props) {
+        super(props);        
+        this.state = {
+        activePage: 1
+        };
+         
+        this.handlePageChange = this.handlePageChange.bind(this)
+      }
+     
+      handlePageChange(pageNumber) {
+        this.setState({activePage: pageNumber});
+        PubSub.publish('mudou-pagina', pageNumber);
+      }
+         
     render() {
         return (
           
@@ -109,28 +121,39 @@ class AddColumnTable extends Component {
                     </tbody>
                     
                 </table>  
-                
-             </div>  
-             
+
+                 
+                <Pagination
+                    activePage={this.state.activePage}
+                    itemsCountPerPage={1}
+                    totalItemsCount={this.props.totalPages}
+                    pageRangeDisplayed={this.props.totalPages}
+                    onChange={this.handlePageChange}
+                />
+                                    
+                </div>   
         );
     }
 }
 
-export default class AddColumnBox extends Component {
+export default class AddNotNullBox extends Component {
     constructor() {
         super();
-        this.state = { lista: [] };
+        this.state = { lista: [], totalPages: 0 };
         this.getTables = this.getTables.bind(this)
     }  
 
-getTables() {
-    fetch('http://localhost:8080/columns')
+getTables(pagina) {
+    const page = (pagina - 1) || 0;
+
+    fetch(`http://localhost:8080/columns?page=${page}`)
       .then((response) => response.json())
       .then((responseJson) => {
 
         this.setState({
           isLoading: false,
           lista: responseJson.content,
+          totalPages: responseJson.totalPages   
         }, function(){
            
         });
@@ -141,10 +164,15 @@ getTables() {
 }
 
 componentDidMount() {
-    this.getTables();
+    this.getTables(0);
 
-    PubSub.subscribe('atualiza-listagem-tables', function () {
-        this.getTables();
+    PubSub.subscribe('atualiza-listagem-tables', function (topico, novaLista) {
+        this.setState({ topico: novaLista });
+        this.getTables(0);
+    }.bind(this))
+
+    PubSub.subscribe('mudou-pagina', function (topico, pagina) {
+        this.getTables(pagina);  
     }.bind(this))
 }
 
@@ -155,14 +183,14 @@ componentDidMount() {
 
             <div>
                 <div className="header">
-                    <h1>Add column</h1>
+                    <h1>Add Not Null</h1>
                    
                 </div>
                
                 <div className="content" id="content">
 
                     <FormularioColumn />
-                    <AddColumnTable lista={this.state.lista} />
+                    <Table lista={this.state.lista} totalPages={this.state.totalPages}/>
                    
                 </div>
             </div>

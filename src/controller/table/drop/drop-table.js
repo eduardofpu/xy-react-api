@@ -1,30 +1,32 @@
 import React, { Component } from 'react';
 import $ from 'jquery';
-import InputCustomizado from './componentes/InputCustomizado';
+import InputCustomizado from '../../../componentes/InputCustomizado';
 import PubSub from 'pubsub-js';
-import TratadorErros from './TratadorErros';
+import TratadorErros from '../../../TratadorErros';
+import Pagination from "react-js-pagination";
+import "bootstrap/less/bootstrap.less";
 
 
 class FormularioAlterTable extends Component {
     constructor() {
         super();
-        this.state = { nameCurrent: '', nameModified: ''};
+        this.state = { nameTable: ''};
         this.enviaForm = this.enviaForm.bind(this);
         
     }
     enviaForm(evento) {
         evento.preventDefault();
         $.ajax({
-            url: "http://localhost:8080/alter/table",   
+            url: "http://localhost:8080/drop/table",   
             contentType: 'application/json',
             dataType: 'json',
-            type: 'put',           
+            type: 'Delete',           
 
-            data: JSON.stringify({ nameCurrent: this.state.nameCurrent, nameModified: this.state.nameModified }),
-            success: function (novaListagem) {
+            data: JSON.stringify({ nameTable: this.state.nameTable }),
+            complete: function (novaListagem) {
                 //disparar um aviso geral de novalistagem disponivel
                 PubSub.publish('atualiza-listagem-tables', novaListagem);
-                this.setState({ nameCurrent: '', nameModified: '' })//limpa o formulario              
+                this.setState({ nameTable: '' })//limpa o formulario              
             }.bind(this),
             error: function (resposta) {
 
@@ -51,11 +53,8 @@ class FormularioAlterTable extends Component {
             <div className="pure-form pure-form-aligned">
                 <form className="pure-form pure-form-aligned" onSubmit={this.enviaForm} method="post">
 
-                    <InputCustomizado id="nameCurrent" type="text"  name="nameCurrent"  value={this.state.nameCurrent} required placeholder="Current" 
-                    onChange={this.salvaAlteracao.bind(this,'nameCurrent')} label="Current Name" />
-
-                    <InputCustomizado id="nameModified" type="text"  name="nameModified"  value={this.state.nameModified} required placeholder="Modified" 
-                    onChange={this.salvaAlteracao.bind(this,'nameModified')} label="Modified Name" />
+                    <InputCustomizado id="nameTable" type="text"  name="nameTable"  value={this.state.nameTable} required placeholder="Name" 
+                    onChange={this.salvaAlteracao.bind(this,'nameTable')} label="Table Name" />
 
                     
                     <div className="pure-control-group">
@@ -71,7 +70,19 @@ class FormularioAlterTable extends Component {
 }
 
 class Table extends Component {  
-    
+    constructor(props) {
+        super(props);        
+        this.state = {
+        activePage: 1
+        };
+         
+        this.handlePageChange = this.handlePageChange.bind(this)
+      }
+     
+      handlePageChange(pageNumber) {
+        this.setState({activePage: pageNumber});
+        PubSub.publish('mudou-pagina', pageNumber);
+      }
       
     render() {
         return (
@@ -99,7 +110,17 @@ class Table extends Component {
                          }
                     </tbody>
                     
-                </table>               
+                </table> 
+
+                
+               
+                <Pagination
+                    activePage={this.state.activePage}
+                    itemsCountPerPage={1}
+                    totalItemsCount={this.props.totalPages}
+                    pageRangeDisplayed={this.props.totalPages}
+                    onChange={this.handlePageChange}
+                />              
  
 
              </div>   
@@ -108,21 +129,24 @@ class Table extends Component {
 }
 
 
-export default class AlterTableBox extends Component {
+export default class DropTableBox extends Component {
     constructor() {
         super();
-        this.state = { lista: [] };
+        this.state = { lista: [],  totalPages: 0  };
         this.getTables = this.getTables.bind(this)
     }  
 
-getTables() {
-    fetch('http://localhost:8080/tables')
+getTables(pagina) {
+    const page = (pagina - 1) || 0;
+    
+    fetch(`http://localhost:8080/tables?page=${page}`)
       .then((response) => response.json())
       .then((responseJson) => {
 
         this.setState({
           isLoading: false,
           lista: responseJson.content,
+          totalPages: responseJson.totalPages 
         }, function(){
            
         });
@@ -133,10 +157,15 @@ getTables() {
 }
 
 componentDidMount() {
-    this.getTables();
+    this.getTables(0);
 
-    PubSub.subscribe('atualiza-listagem-tables', function () {
-        this.getTables();
+    PubSub.subscribe('atualiza-listagem-tables', function (topico, novaLista) {
+        this.setState({ topico: novaLista });
+        this.getTables(0);
+    }.bind(this))
+
+    PubSub.subscribe('mudou-pagina', function (topico, pagina) {
+        this.getTables(pagina);  
     }.bind(this))
 }
 
@@ -154,7 +183,7 @@ componentDidMount() {
                 <div className="content" id="content">
 
                     <FormularioAlterTable />
-                    <Table lista={this.state.lista} />
+                    <Table lista={this.state.lista } totalPages={this.state.totalPages} />
                    
                 </div>
             </div>

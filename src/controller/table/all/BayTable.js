@@ -1,23 +1,22 @@
 import React, { Component } from 'react';
 import $ from 'jquery';
-import InputCustomizado from './componentes/InputCustomizado';
+import InputCustomizado from '../../../componentes/InputCustomizado';
 import PubSub from 'pubsub-js';
-import TratadorErros from './TratadorErros';
+import TratadorErros from '../../../TratadorErros';
 
 
 class FormularioTable extends Component {
     constructor() {
         super();
-        this.state = { nameTable: ''};
+        this.state = { nameTable: ''};        
         this.enviaForm = this.enviaForm.bind(this);        
     }
 
     enviaForm(evento) {
        evento.preventDefault();   
+      
        const name = this.state.nameTable;
-       const getUrl = `http://localhost:8080/${name}`;      
-
-       console.log(getUrl);
+       const getUrl = `http://localhost:8080/${name}`;   
 
         $.ajax({
             url: getUrl,
@@ -27,7 +26,7 @@ class FormularioTable extends Component {
            
             success: function (novaListagem) {
                 //disparar um aviso geral de novalistagem disponivel
-                PubSub.publish('atualiza-listagem-tables', novaListagem);
+                PubSub.publish('atualiza-listagem-tables', novaListagem);                
                 this.setState({ nameTable: '' })//limpa o formulario              
             }.bind(this),
             error: function (resposta) {
@@ -45,8 +44,8 @@ class FormularioTable extends Component {
 
     salvaAlteracao(nomeInput,evento){
         var campo={};
-        campo[nomeInput]=evento.target.value;
-        this.setState(campo);
+        campo[nomeInput]=evento.target.value;        
+        this.setState(campo);       
 
     }
 
@@ -90,7 +89,9 @@ class Table extends Component {
                         {
                             
                          this.props.lista.map(function (u) {
+                           
                                 return (
+                                   
                                     <tr key={u.id}>    
                                     <td>{u.id}</td>                      
                                     <td>{u.nameColumn}</td>   
@@ -100,7 +101,8 @@ class Table extends Component {
                                 );                              
                             })                           
                          }
-                    </tbody>                    
+                    </tbody>  
+                                   
                 </table> 
              </div>   
         );
@@ -117,8 +119,7 @@ export default class BayTableBox extends Component {
 componentDidMount() {      
     PubSub.subscribe('atualiza-listagem-tables', function (topico, novaLista) {
         this.setState({ lista: novaLista });
-        console.log(topico)
-        console.log(novaLista)
+        
     }.bind(this))
 }
 
@@ -128,7 +129,7 @@ componentDidMount() {
 
             <div>
                 <div className="header">
-                    <h1>Table attributes</h1>                   
+                    <h1>Table attributes </h1>                   
                 </div> 
 
                 <div className="content" id="content">
