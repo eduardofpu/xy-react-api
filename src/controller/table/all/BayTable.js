@@ -70,8 +70,10 @@ class FormularioTable extends Component {
 }
 
 class Table extends Component {      
-      
+    
     render() {
+        console.log(this.props.lista); 
+        
         return (
           
             <div>
@@ -88,7 +90,7 @@ class Table extends Component {
                     <tbody>
                         {
                             
-                         this.props.lista.map(function (u) {
+                            this.props.lista &&  this.props.lista.map(function (u) {
                            
                                 return (
                                    
@@ -118,8 +120,7 @@ export default class BayTableBox extends Component {
 
 componentDidMount() {      
     PubSub.subscribe('atualiza-listagem-tables', function (topico, novaLista) {
-        this.setState({ lista: novaLista });
-        
+        this.setState({ lista: novaLista });        
     }.bind(this))
 }
 

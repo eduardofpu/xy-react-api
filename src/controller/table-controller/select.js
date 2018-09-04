@@ -52,7 +52,7 @@ class FormularioTable extends Component {
     render() {
         return (
             <div className="pure-form pure-form-aligned">
-                <form className="pure-form pure-form-aligned" onSubmit={this.enviaForm} method="post">
+                <form className="pure-form pure-form-aligned" onSubmit={this.enviaForm} method="get">
                    
                     <InputCustomizado id="nameTable" type="text"  name="nameTable"  value={this.state.nameTable} required placeholder="Name" 
                     onChange={this.salvaAlteracao.bind(this,'nameTable')} label="Table Name" />
