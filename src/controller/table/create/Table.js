@@ -1,62 +1,40 @@
 import React, { Component } from 'react';
-import $ from 'jquery';
 import InputCustomizado from '../../../componentes/InputCustomizado';
-import TratadorErros from '../../../TratadorErros';
 import Pagination from "react-js-pagination";
 import PubSub from 'pubsub-js';
 import "bootstrap/less/bootstrap.less";
+import Call from './helpers';
+import { BASE_URL } from '../../../core/constants'
 
 class FormularioTable extends Component {
     constructor() {
         super();
         this.state = { nameTable: ''};
-        this.enviaForm = this.enviaForm.bind(this);      
-        
+        this.enviaForm = this.enviaForm.bind(this);
+       
     }
-    enviaForm(evento) {
-        evento.preventDefault();
-        $.ajax({
-            url: "http://localhost:8080/create/table",   
-            contentType: 'application/json',
-            dataType: 'json',
-            type: 'post',           
-
-            data: JSON.stringify({ nameTable: this.state.nameTable }),
-            success: function (novaListagem) {
-                //disparar um aviso geral de novalistagem disponivel
-                PubSub.publish('atualiza-listagem-tables', novaListagem);
-                this.setState({ nameTable: '' })//limpa o formulario              
-            }.bind(this),
-            error: function (resposta) {
-
-                if (resposta.status === 400) {
-
-                    new TratadorErros().publicaErros(resposta.responseJSON);
-                }
-            },
-            beforeSend: function () {
-                PubSub.publish("limpa-erros", {});
-            }
-        });
+    
+    enviaForm (evento){
+       evento.preventDefault();
+       
+       const URL = `${BASE_URL}/create/table`;
+       const stringiFy = JSON.stringify({nameTable: this.state.nameTable, headers: this.state.headers });
+       const setState = this.setState.bind(this);
+       const name = this.state.nameTable;
+             
+       new Call().urlCallbackPost(URL, stringiFy, setState, name); 
     }
-
-    salvaAlteracao(nomeInput,evento){
-        var campo={};
-        campo[nomeInput]=evento.target.value;
-        this.setState(campo);
-
-    }
-
+    
     render() {
         return (
             <div className="autorForm">
                 <form className="pure-form pure-form-aligned" onSubmit={this.enviaForm} method="post">
                     <InputCustomizado id="nameTable" type="text"  name="nameTable"  value={this.state.nameTable} required placeholder="Name" 
-                    onChange={this.salvaAlteracao.bind(this,'nameTable')} label="Table Name"  />
+                    onChange={new Call().butonSave.bind(this,'nameTable')} label="Table Name"/>
                     
                     <div className="pure-control-group">
-                        <label></label>
-                        <button type="submit" className="pure-button pure-button-primary">Record</button>
+                        <label></label>                       
+                        <button type="submit" className="pure-button pure-button-primary">Record</button>                        
                     </div>
                 </form>
 
@@ -129,7 +107,7 @@ export default class TableBox extends Component {
         super();
      
         this.state = { lista: [], totalPages: 0 };
-        this.getTables = this.getTables.bind(this)   
+        this.getTables = this.getTables.bind(this);   
              
     }  
 

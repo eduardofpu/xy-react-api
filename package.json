@@ -9,10 +9,11 @@
     "popper.js": "^1.14.4",
     "pubsub-js": "^1.6.0",
     "react": "^16.2.0",
+    "react-alert": "^4.0.4",
     "react-dom": "^16.2.0",
+    "react-js-pagination": "^3.0.2",
     "react-router": "^3.2.0",
-    "react-scripts": "0.9.5",
-    "react-js-pagination": "^3.0.2"
+    "react-scripts": "0.9.5"
   },
   "devDependencies": {},
   "scripts": {
